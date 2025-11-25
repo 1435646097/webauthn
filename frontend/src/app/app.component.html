@@ -1,0 +1,37 @@
+<section class="card">
+  <h1>Windows Hello WebAuthn演示</h1>
+  <form [formGroup]="registerForm" (ngSubmit)="register()">
+    <label>
+      用户名
+      <input formControlName="username" type="text" autocomplete="username">
+    </label>
+    <label>
+      显示名
+      <input formControlName="displayName" type="text">
+    </label>
+    <label class="toggle">
+      <input formControlName="residentKey" type="checkbox">
+      允许创建驻留凭据(推荐)
+    </label>
+    <button type="submit" class="primary">使用 Windows Hello 注册</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>PIN 登录</h2>
+  <form [formGroup]="loginForm" (ngSubmit)="login()">
+    <label>
+      用户名
+      <input formControlName="username" type="text" autocomplete="username">
+    </label>
+    <button type="submit" class="secondary">使用 Windows Hello 登录</button>
+  </form>
+</section>
+
+<section class="card">
+  <h3>日志</h3>
+  <p *ngIf="!logs().length">暂无日志</p>
+  <ul>
+    <li *ngFor="let log of logs()">{{ log }}</li>
+  </ul>
+</section>

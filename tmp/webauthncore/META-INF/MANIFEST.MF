@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Specification-Title: Web Authentication: An API for accessing Public Key
+  Credentials
+Specification-Version: Level 2 Proposed Recommendation 2021-04-08
+Specification-Vendor: World Wide Web Consortium
+Specification-Url: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/
+Specification-Url-Latest: https://www.w3.org/TR/webauthn-2/
+Specification-W3c-Status: recommendation
+Specification-Release-Date: 2021-04-08
+Implementation-Id: java-webauthn-server
+Implementation-Title: Yubico Web Authentication server library
+Implementation-Version: 2.4.0
+Implementation-Vendor: Yubico
+Implementation-Source-Url: https://github.com/Yubico/java-webauthn-serve
+ r
+Git-Commit: 479492cb611c73df48f2ba31cbea3d7127816fcd
+

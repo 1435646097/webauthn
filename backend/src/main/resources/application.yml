@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+webauthn:
+  rp-id: webauthn-demo.local
+  rp-name: Windows Hello WebAuthn Demo
+  origins:
+    - https://localhost:4211
+    - https://10.169.42.93:4211
+    - https://webauthn-demo.local:4211
