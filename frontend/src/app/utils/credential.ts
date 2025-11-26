@@ -47,31 +47,45 @@ export interface AssertionCredentialJSON {
 }
 
 export function preformatCreationOptions(options: CreationOptionsJSON): PublicKeyCredentialCreationOptions {
-  return {
+  const publicKey: PublicKeyCredentialCreationOptions = {
     ...options,
     challenge: base64UrlToBuffer(options.challenge),
     user: {
       ...options.user,
       id: base64UrlToBuffer(options.user.id)
     },
-    excludeCredentials: options.excludeCredentials?.map(descriptor => ({
-      type: descriptor.type,
-      transports: descriptor.transports,
-      id: base64UrlToBuffer(descriptor.id)
-    }))
+    excludeCredentials: options.excludeCredentials?.map(descriptor => {
+      const record: PublicKeyCredentialDescriptor = {
+        type: descriptor.type,
+        id: base64UrlToBuffer(descriptor.id)
+      };
+      if (descriptor.transports?.length) {
+        record.transports = descriptor.transports;
+      }
+      return record;
+    })
   };
+
+  return sanitizeExtensions(publicKey);
 }
 
 export function preformatRequestOptions(options: RequestOptionsJSON): PublicKeyCredentialRequestOptions {
-  return {
+  const publicKey: PublicKeyCredentialRequestOptions = {
     ...options,
     challenge: base64UrlToBuffer(options.challenge),
-    allowCredentials: options.allowCredentials?.map(descriptor => ({
-      type: descriptor.type,
-      transports: descriptor.transports,
-      id: base64UrlToBuffer(descriptor.id)
-    }))
+    allowCredentials: options.allowCredentials?.map(descriptor => {
+      const record: PublicKeyCredentialDescriptor = {
+        type: descriptor.type,
+        id: base64UrlToBuffer(descriptor.id)
+      };
+      if (descriptor.transports?.length) {
+        record.transports = descriptor.transports;
+      }
+      return record;
+    })
   };
+
+  return sanitizeExtensions(publicKey);
 }
 
 export function attestationToJSON(credential: PublicKeyCredential): AttestationCredentialJSON {
@@ -102,4 +116,39 @@ export function assertionToJSON(credential: PublicKeyCredential): AssertionCrede
       userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null
     }
   };
+}
+
+function sanitizeExtensions<T extends { extensions?: AuthenticationExtensionsClientInputs }>(options: T): T {
+  if (!options.extensions) {
+    return options;
+  }
+
+  const extensions = options.extensions as Record<string, unknown>;
+  for (const key of Object.keys(extensions)) {
+    const value = extensions[key];
+    if (value == null) {
+      delete extensions[key];
+      continue;
+    }
+    if (key === 'appid') {
+      if (typeof value !== 'string' || !isValidUrl(value)) {
+        delete extensions[key];
+      }
+    }
+  }
+
+  if (Object.keys(extensions).length === 0) {
+    delete options.extensions;
+  }
+
+  return options;
+}
+
+function isValidUrl(value: string): boolean {
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
 }

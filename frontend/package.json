@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "ng serve --host webauthn-demo.local --port 4211 --ssl true --ssl-cert .\\certs\\localhost.crt --ssl-key .\\certs\\localhost.key",
+    "start": "ng serve --host webauthn-demo.local --port 4211 --ssl true --ssl-cert .\\certs\\webauthn-demo.local.crt --ssl-key .\\certs\\webauthn-demo.local.key",
     "build": "ng build",
     "lint": "ng lint",
     "test": "ng test"
