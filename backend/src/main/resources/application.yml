@@ -1,6 +1,35 @@
 server:
   port: 8080
 
+# 数据库配置
+spring:
+  datasource:
+    # MySQL 数据库连接配置（请根据实际情况修改）
+    url: jdbc:mysql://localhost:3306/your_database_name?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: your_username
+    password: your_password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    # HikariCP 连接池配置
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# MyBatis 配置
+mybatis:
+  # Mapper XML 文件位置
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类包路径
+  type-aliases-package: com.example.webauthn.entity
+  configuration:
+    # 开启驼峰命名转换（Java 驼峰 <-> 数据库下划线）
+    map-underscore-to-camel-case: false
+    # 打印 SQL 日志（开发环境使用，生产环境建议关闭）
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# WebAuthn 配置
 webauthn:
   rp-id: webauthn-demo.local
   rp-name: Windows Hello WebAuthn Demo
