@@ -72,9 +72,123 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
 ```
 
+## 🔒 HTTPS 配置（重要）
+
+### ⚠️ WebAuthn 必须在 HTTPS 环境下运行
+
+**WebAuthn 协议要求必须在 HTTPS 环境下运行**，唯一的例外是 `localhost`。但为了更接近生产环境，强烈建议本地开发也使用 HTTPS。
+
+### 本地开发 HTTPS 配置
+
+#### 方法一：使用自签名证书（推荐）
+
+**1. 生成自签名证书**
+
+在项目根目录执行以下命令：
+
+```powershell
+# 使用 OpenSSL 生成自签名证书（需要先安装 OpenSSL）
+openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes -subj "/CN=localhost"
+
+# 或者使用 PowerShell 生成证书
+$cert = New-SelfSignedCertificate -DnsName "localhost", "127.0.0.1" -CertStoreLocation "cert:\LocalMachine\My" -NotAfter (Get-Date).AddYears(5)
+$pwd = ConvertTo-SecureString -String "password" -Force -AsPlainText
+Export-PfxCertificate -Cert $cert -FilePath "localhost.pfx" -Password $pwd
+```
+
+**2. 将证书添加到 Windows 受信任的根证书颁发机构**
+
+```powershell
+# 方法 1：使用 PowerShell（需要管理员权限）
+Import-Certificate -FilePath "cert.pem" -CertStoreLocation Cert:\LocalMachine\Root
+
+# 方法 2：手动导入
+# 1. 双击 cert.pem 文件
+# 2. 点击"安装证书"
+# 3. 选择"本地计算机"
+# 4. 选择"将所有的证书都放入下列存储" -> "受信任的根证书颁发机构"
+# 5. 完成导入
+```
+
+**3. 配置后端使用 HTTPS**
+
+编辑 `backend/src/main/resources/application.yml`：
+
+```yaml
+server:
+  port: 8443
+  ssl:
+    enabled: true
+    key-store: classpath:localhost.pfx  # 或使用绝对路径
+    key-store-password: password
+    key-store-type: PKCS12
+```
+
+**4. 配置前端使用 HTTPS**
+
+编辑 `frontend/angular.json`，在 `serve` 配置中添加：
+
+```json
+"serve": {
+  "options": {
+    "ssl": true,
+    "sslCert": "../cert.pem",
+    "sslKey": "../key.pem"
+  }
+}
+```
+
+或者在启动时指定：
+
+```powershell
+ng serve --ssl --ssl-cert ../cert.pem --ssl-key ../key.pem
+```
+
+**5. 更新 application.yml 中的 origins**
+
+```yaml
+webauthn:
+  rp-id: localhost
+  rp-name: Windows Hello WebAuthn Demo
+  origins:
+    - https://localhost:4200
+    - https://localhost:4211
+```
+
+#### 方法二：使用 mkcert（更简单）
+
+[mkcert](https://github.com/FiloSottile/mkcert) 是一个零配置的本地 HTTPS 证书生成工具。
+
+```powershell
+# 1. 安装 mkcert（使用 Chocolatey）
+choco install mkcert
+
+# 2. 安装本地 CA
+mkcert -install
+
+# 3. 生成证书
+mkcert localhost 127.0.0.1 ::1
+
+# 会生成两个文件：
+# - localhost+2.pem（证书）
+# - localhost+2-key.pem（私钥）
+```
+
+然后按照方法一的步骤 3-5 配置即可。
+
+### 生产环境 HTTPS
+
+生产环境必须使用由受信任的证书颁发机构（CA）签发的证书：
+
+- **推荐**：使用 [Let's Encrypt](https://letsencrypt.org/) 免费 SSL 证书
+- 或购买商业 SSL 证书（如 DigiCert、Comodo 等）
+- 配置 Nginx/Apache 反向代理处理 HTTPS
+
 ## 🚀 运行项目
 
 ### 启动后端服务
+
+**使用 HTTP（仅限 localhost 测试）：**
 
 ```powershell
 cd backend
@@ -83,7 +197,18 @@ mvn spring-boot:run
 
 后端服务运行在 `http://localhost:8080`
 
+**使用 HTTPS（推荐）：**
+
+```powershell
+cd backend
+mvn spring-boot:run
+```
+
+后端服务运行在 `https://localhost:8443`
+
 ### 启动前端应用
+
+**使用 HTTP（仅限 localhost 测试）：**
 
 ```powershell
 cd frontend
@@ -91,7 +216,24 @@ npm install
 npm start
 ```
 
-前端应用运行在 `http://localhost:4200`，通过 `proxy.conf.json` 代理 `/api` 请求到后端。
+前端应用运行在 `http://localhost:4200`
+
+**使用 HTTPS（推荐）：**
+
+```powershell
+cd frontend
+npm install
+npm start -- --ssl --ssl-cert ../cert.pem --ssl-key ../key.pem
+```
+
+前端应用运行在 `https://localhost:4200`
+
+### 访问应用
+
+- HTTP 模式：`http://localhost:4200`
+- HTTPS 模式：`https://localhost:4200`
+
+**注意**：首次访问 HTTPS 时，浏览器可能会显示"不安全"警告（自签名证书），点击"高级" -> "继续访问"即可。如果已将证书添加到受信任的根证书颁发机构，则不会出现此警告。
 
 ## 📖 WebAuthn 工作流程
 
