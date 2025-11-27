@@ -5,9 +5,9 @@ server:
 spring:
   datasource:
     # MySQL 数据库连接配置（请根据实际情况修改）
-    url: jdbc:mysql://localhost:3306/your_database_name?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: your_username
-    password: your_password
+    url: jdbc:mysql://localhost:3306/siteweb?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
     # HikariCP 连接池配置
     hikari:

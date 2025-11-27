@@ -70,5 +70,8 @@
       }
     }
   },
-  "defaultProject": "webauthn-frontend"
+  "defaultProject": "webauthn-frontend",
+  "cli": {
+    "analytics": "e83b4d11-80ba-489b-bc99-452774fbc82e"
+  }
 }

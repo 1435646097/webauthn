@@ -118,12 +118,13 @@ public class WebAuthnService {
                         .response(request.credential())
                         .build());
 
-        // 确保用户存在
-        UserAccount user = credentialRepository.ensureUser(request.username(), request.username());
+        // 使用 creationOptions 中的 userHandle（与 startRegistration 中生成的一致）
+        ByteArray userHandle = creationOptions.getUser().getId();
+
         // 构建已注册凭证对象
         RegisteredCredential credential = RegisteredCredential.builder()
                 .credentialId(result.getKeyId().getId()) // 凭证 ID（唯一标识）
-                .userHandle(user.getUserHandle()) // 用户句柄
+                .userHandle(userHandle) // 使用注册时生成的 userHandle
                 .publicKeyCose(result.getPublicKeyCose()) // 公钥（COSE 格式）
                 .signatureCount(result.getSignatureCount()) // 签名计数器（防止克隆攻击）
                 .build();

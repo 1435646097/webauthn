@@ -176,23 +176,6 @@ public class InMemoryCredentialRepository implements CredentialRepository {
     }
 
     /**
-     * 查找凭证 - 仅根据凭证 ID 查找凭证（自定义方法）
-     * <p>
-     * 说明：
-     * - 用于可发现凭证认证流程
-     * - 不需要提前知道用户名，只需凭证 ID
-     *
-     * @param credentialId 凭证 ID
-     * @return Optional<RegisteredCredential> 已注册的凭证（如果找到）
-     */
-    public Optional<RegisteredCredential> lookup(ByteArray credentialId) {
-        return credentials.values().stream()
-                .flatMap(List::stream)
-                .filter(cred -> cred.getCredentialId().equals(credentialId))
-                .findFirst();
-    }
-
-    /**
      * 查找所有匹配的凭证 - CredentialRepository 接口方法
      * <p>
      * 说明：

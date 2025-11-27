@@ -8,6 +8,7 @@ import com.yubico.webauthn.CredentialRepository;
 import com.yubico.webauthn.RegisteredCredential;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  * - userId: 使用 tbl_account.UserId（用户主键）
  * - userHandle: 存储在 tbl_webauthn_credential.UserHandle（32 字节随机值）
  */
+@Slf4j
 @Repository
 public class DatabaseCredentialRepository implements CredentialRepository {
 
@@ -91,7 +93,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
             // 用户已有 UserHandle，从 Base64 解码
             userHandle = ByteArray.fromBase64(userHandleBase64);
         }
-
+        log.info("userHandle={}", userHandle.getBase64());
         return new UserAccount(username, actualDisplayName, userHandle);
     }
 
@@ -172,18 +174,25 @@ public class DatabaseCredentialRepository implements CredentialRepository {
         // 1. 查询用户 ID
         Integer userId = accountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
+            log.info("[WebAuthn] 用户不存在: {}", username);
             return Collections.emptySet();
         }
 
         // 2. 查询用户的所有凭证
         List<WebAuthnCredentialEntity> credentials = credentialMapper.selectByUserId(userId);
+        log.info("[WebAuthn] 用户 {} 的凭证数量: {}", username, credentials.size());
 
         // 3. 转换为 PublicKeyCredentialDescriptor
-        return credentials.stream()
-                .map(cred -> PublicKeyCredentialDescriptor.builder()
-                        .id(ByteArray.fromBase64(cred.getCredentialId()))
-                        .build())
+        Set<PublicKeyCredentialDescriptor> result = credentials.stream()
+                .map(cred -> {
+                    log.info("[WebAuthn] 凭证 ID: {}", cred.getCredentialId());
+                    return PublicKeyCredentialDescriptor.builder()
+                            .id(ByteArray.fromBase64(cred.getCredentialId()))
+                            .build();
+                })
                 .collect(Collectors.toSet());
+
+        return result;
     }
 
     /**
@@ -272,37 +281,8 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     }
 
     /**
-     * 查找凭证 - 仅根据凭证 ID 查找凭证（自定义方法）
-     *
-     * 说明：
-     * - 用于可发现凭证认证流程
-     * - 不需要提前知道用户名，只需凭证 ID
-     *
-     * @param credentialId 凭证 ID
-     * @return Optional<RegisteredCredential> 已注册的凭证（如果找到）
-     */
-    public Optional<RegisteredCredential> lookup(ByteArray credentialId) {
-        // 1. 查询凭证
-        WebAuthnCredentialEntity entity = credentialMapper.selectByCredentialId(credentialId.getBase64());
-
-        if (entity == null) {
-            return Optional.empty();
-        }
-
-        // 2. 转换为 RegisteredCredential
-        RegisteredCredential credential = RegisteredCredential.builder()
-                .credentialId(ByteArray.fromBase64(entity.getCredentialId()))
-                .userHandle(ByteArray.fromBase64(entity.getUserHandle()))
-                .publicKeyCose(ByteArray.fromBase64(entity.getPublicKeyCose()))
-                .signatureCount(entity.getSignatureCount())
-                .build();
-
-        return Optional.of(credential);
-    }
-
-    /**
      * 查找所有匹配的凭证 - CredentialRepository 接口方法
-     *
+     * <p>
      * 说明：
      * - 返回所有匹配该凭证 ID 的凭证（理论上应该只有一个）
      * - 用于检测凭证 ID 冲突
@@ -328,7 +308,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
 
     /**
      * 获取用户的所有凭证 - 自定义方法
-     *
+     * <p>
      * 说明：
      * - 用于管理界面展示用户已注册的所有凭证
      * - 可以查看用户有哪些设备已注册
@@ -359,7 +339,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
 
     /**
      * 检查用户是否已注册过 WebAuthn 凭证
-     *
+     * <p>
      * 说明：
      * - 用于判断用户是否已经注册过设备
      * - 可以在前端决定显示"注册"还是"登录"按钮
@@ -397,7 +377,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
 
     /**
      * 删除凭证 - 用户可以删除不再使用的设备凭证
-     *
+     * <p>
      * 说明：
      * - 用于设备管理功能
      * - 用户可以删除丢失或不再使用的设备
@@ -421,7 +401,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
 
     /**
      * 删除用户的所有凭证
-     *
+     * <p>
      * 说明：
      * - 用于用户注销或重置 WebAuthn 设置
      * - 删除后用户需要重新注册设备
@@ -443,7 +423,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
 
     /**
      * 生成随机用户句柄 - 私有辅助方法
-     *
+     * <p>
      * 说明：
      * - 用户句柄是 32 字节的随机值
      * - 用于唯一标识用户，不暴露用户名等敏感信息
