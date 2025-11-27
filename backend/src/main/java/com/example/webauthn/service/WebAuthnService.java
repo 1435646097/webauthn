@@ -194,4 +194,71 @@ public class WebAuthnService {
 
         return new AuthenticationFinishResponse(result.isSuccess(), result.getUsername(), result.getSignatureCount());
     }
+
+    /**
+     * 检查用户是否已注册过 WebAuthn 凭证
+     *
+     * 说明：
+     * - 用于判断用户是否已经注册过设备
+     * - 前端可以根据此结果决定显示"注册设备"还是"登录"按钮
+     *
+     * @param username 登录账号（LogonId）
+     * @return 已注册返回 true，未注册返回 false
+     */
+    public boolean hasCredentials(String username) {
+        return credentialRepository.hasCredentials(username);
+    }
+
+    /**
+     * 获取用户的凭证数量
+     *
+     * @param username 登录账号（LogonId）
+     * @return 凭证数量
+     */
+    public int getCredentialCount(String username) {
+        return credentialRepository.getCredentialCount(username);
+    }
+
+    /**
+     * 获取用户的所有凭证列表
+     *
+     * 说明：
+     * - 用于设备管理界面展示用户已注册的所有设备
+     * - 返回凭证 ID、注册时间、最后使用时间等信息
+     *
+     * @param username 登录账号（LogonId）
+     * @return 凭证列表
+     */
+    public java.util.List<com.yubico.webauthn.RegisteredCredential> getCredentials(String username) {
+        return credentialRepository.getCredentials(username);
+    }
+
+    /**
+     * 删除指定凭证
+     *
+     * 说明：
+     * - 用户可以删除不再使用的设备凭证
+     * - 比如设备丢失、更换设备等情况
+     *
+     * @param username 登录账号（LogonId）
+     * @param credentialId 凭证 ID（Base64 编码）
+     * @return 是否删除成功
+     */
+    public boolean deleteCredential(String username, String credentialId) {
+        return credentialRepository.deleteCredential(username, com.yubico.webauthn.data.ByteArray.fromBase64(credentialId));
+    }
+
+    /**
+     * 删除用户的所有凭证
+     *
+     * 说明：
+     * - 用于用户注销或重置 WebAuthn 设置
+     * - 删除后用户需要重新注册设备
+     *
+     * @param username 登录账号（LogonId）
+     * @return 删除的凭证数量
+     */
+    public int deleteAllCredentials(String username) {
+        return credentialRepository.deleteAllCredentials(username);
+    }
 }

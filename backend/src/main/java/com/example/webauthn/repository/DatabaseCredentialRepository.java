@@ -358,8 +358,92 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     }
 
     /**
+     * 检查用户是否已注册过 WebAuthn 凭证
+     *
+     * 说明：
+     * - 用于判断用户是否已经注册过设备
+     * - 可以在前端决定显示"注册"还是"登录"按钮
+     *
+     * @param username 登录账号（LogonId）
+     * @return 已注册返回 true，未注册返回 false
+     */
+    public boolean hasCredentials(String username) {
+        // 1. 查询用户 ID
+        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        if (userId == null) {
+            return false;
+        }
+
+        // 2. 检查是否有凭证
+        return credentialMapper.hasCredentials(userId);
+    }
+
+    /**
+     * 获取用户的凭证数量
+     *
+     * @param username 登录账号（LogonId）
+     * @return 凭证数量
+     */
+    public int getCredentialCount(String username) {
+        // 1. 查询用户 ID
+        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        if (userId == null) {
+            return 0;
+        }
+
+        // 2. 统计凭证数量
+        return credentialMapper.countByUserId(userId);
+    }
+
+    /**
+     * 删除凭证 - 用户可以删除不再使用的设备凭证
+     *
+     * 说明：
+     * - 用于设备管理功能
+     * - 用户可以删除丢失或不再使用的设备
+     *
+     * @param username 登录账号（LogonId）
+     * @param credentialId 凭证 ID
+     * @return 是否删除成功
+     */
+    @Transactional
+    public boolean deleteCredential(String username, ByteArray credentialId) {
+        // 1. 查询用户 ID
+        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        if (userId == null) {
+            return false;
+        }
+
+        // 2. 删除凭证
+        int rows = credentialMapper.deleteCredential(userId, credentialId.getBase64());
+        return rows > 0;
+    }
+
+    /**
+     * 删除用户的所有凭证
+     *
+     * 说明：
+     * - 用于用户注销或重置 WebAuthn 设置
+     * - 删除后用户需要重新注册设备
+     *
+     * @param username 登录账号（LogonId）
+     * @return 删除的凭证数量
+     */
+    @Transactional
+    public int deleteAllCredentials(String username) {
+        // 1. 查询用户 ID
+        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        if (userId == null) {
+            return 0;
+        }
+
+        // 2. 删除所有凭证
+        return credentialMapper.deleteAllByUserId(userId);
+    }
+
+    /**
      * 生成随机用户句柄 - 私有辅助方法
-     * <p>
+     *
      * 说明：
      * - 用户句柄是 32 字节的随机值
      * - 用于唯一标识用户，不暴露用户名等敏感信息

@@ -88,4 +88,40 @@ public interface WebAuthnCredentialMapper {
      * @return 凭证列表
      */
     List<WebAuthnCredentialEntity> selectAllByCredentialId(@Param("credentialId") String credentialId);
+
+    /**
+     * 统计用户的凭证数量
+     *
+     * @param userId 用户 ID
+     * @return 凭证数量
+     */
+    int countByUserId(@Param("userId") Integer userId);
+
+    /**
+     * 检查用户是否已注册过 WebAuthn 凭证
+     *
+     * @param userId 用户 ID
+     * @return 存在返回 true，不存在返回 false
+     */
+    default boolean hasCredentials(Integer userId) {
+        return countByUserId(userId) > 0;
+    }
+
+    /**
+     * 删除指定凭证
+     *
+     * @param userId 用户 ID
+     * @param credentialId 凭证 ID
+     * @return 影响的行数
+     */
+    int deleteCredential(@Param("userId") Integer userId,
+                         @Param("credentialId") String credentialId);
+
+    /**
+     * 删除用户的所有凭证
+     *
+     * @param userId 用户 ID
+     * @return 影响的行数
+     */
+    int deleteAllByUserId(@Param("userId") Integer userId);
 }
