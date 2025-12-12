@@ -1,7 +1,7 @@
 package com.example.webauthn.repository;
 
 import com.example.webauthn.entity.WebAuthnCredentialEntity;
-import com.example.webauthn.mapper.AccountMapper;
+import com.example.webauthn.mapper.WebAuthAccountMapper;
 import com.example.webauthn.mapper.WebAuthnCredentialMapper;
 import com.example.webauthn.model.UserAccount;
 import com.yubico.webauthn.CredentialRepository;
@@ -46,12 +46,12 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     private final WebAuthnCredentialMapper credentialMapper;
 
     // 用户账户 Mapper
-    private final AccountMapper accountMapper;
+    private final WebAuthAccountMapper webAuthAccountMapper;
 
     public DatabaseCredentialRepository(WebAuthnCredentialMapper credentialMapper,
-                                        AccountMapper accountMapper) {
+                                        WebAuthAccountMapper webAuthAccountMapper) {
         this.credentialMapper = credentialMapper;
-        this.accountMapper = accountMapper;
+        this.webAuthAccountMapper = webAuthAccountMapper;
     }
 
     /**
@@ -70,7 +70,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Transactional
     public UserAccount ensureUser(String username, String displayName) {
         // 1. 从 tbl_account 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             throw new IllegalArgumentException("用户不存在，请先在系统中注册用户：" + username);
         }
@@ -78,7 +78,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
         // 2. 查询用户姓名（如果 displayName 为空，则从数据库获取）
         String actualDisplayName = displayName;
         if (actualDisplayName == null || actualDisplayName.isBlank()) {
-            actualDisplayName = accountMapper.selectUserNameByUserId(userId);
+            actualDisplayName = webAuthAccountMapper.selectUserNameByUserId(userId);
         }
 
         // 3. 查询或生成 UserHandle
@@ -110,7 +110,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Transactional
     public void addCredential(String username, RegisteredCredential credential) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             throw new IllegalArgumentException("用户不存在：" + username);
         }
@@ -145,7 +145,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Transactional
     public void updateCredential(String username, ByteArray credentialId, long signatureCount) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return;
         }
@@ -172,7 +172,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Override
     public Set<PublicKeyCredentialDescriptor> getCredentialIdsForUsername(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             log.info("[WebAuthn] 用户不存在: {}", username);
             return Collections.emptySet();
@@ -208,7 +208,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Override
     public Optional<ByteArray> getUserHandleForUsername(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return Optional.empty();
         }
@@ -242,7 +242,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
         }
 
         // 2. 根据用户 ID 查询 LogonId
-        String logonId = accountMapper.selectLogonIdByUserId(userId);
+        String logonId = webAuthAccountMapper.selectLogonIdByUserId(userId);
         return Optional.ofNullable(logonId);
     }
 
@@ -318,7 +318,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
      */
     public List<RegisteredCredential> getCredentials(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return Collections.emptyList();
         }
@@ -349,7 +349,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
      */
     public boolean hasCredentials(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return false;
         }
@@ -366,7 +366,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
      */
     public int getCredentialCount(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return 0;
         }
@@ -389,7 +389,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Transactional
     public boolean deleteCredential(String username, ByteArray credentialId) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return false;
         }
@@ -412,7 +412,7 @@ public class DatabaseCredentialRepository implements CredentialRepository {
     @Transactional
     public int deleteAllCredentials(String username) {
         // 1. 查询用户 ID
-        Integer userId = accountMapper.selectUserIdByLogonId(username);
+        Integer userId = webAuthAccountMapper.selectUserIdByLogonId(username);
         if (userId == null) {
             return 0;
         }

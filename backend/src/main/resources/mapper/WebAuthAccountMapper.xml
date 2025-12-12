@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.example.webauthn.mapper.AccountMapper">
+<mapper namespace="com.example.webauthn.mapper.WebAuthAccountMapper">
 
     <!-- 根据登录账号查询用户 ID -->
     <select id="selectUserIdByLogonId" resultType="java.lang.Integer">

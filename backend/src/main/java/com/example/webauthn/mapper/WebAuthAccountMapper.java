@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Param;
  * - 用于 WebAuthn 流程中获取用户基本信息
  */
 @Mapper
-public interface AccountMapper {
+public interface WebAuthAccountMapper {
 
     /**
      * 根据登录账号查询用户 ID
